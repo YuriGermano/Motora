@@ -19,6 +19,14 @@ Write-Host ""
 Write-Host "[2/3] Populando banco de dados de demonstracao..." -ForegroundColor Green
 python seed_data.py
 
+# Se houver celular Android conectado via USB, redireciona a porta 8000 automaticamente
+$adbPath = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+if (Test-Path $adbPath) {
+    & $adbPath reverse tcp:8000 tcp:8000 2>$null
+} else {
+    adb reverse tcp:8000 tcp:8000 2>$null
+}
+
 Write-Host ""
 Write-Host "[3/3] Iniciando API em http://localhost:8000 ..." -ForegroundColor Green
 Write-Host "Documentacao Swagger: http://localhost:8000/docs" -ForegroundColor Yellow

@@ -5,9 +5,10 @@ import '../models/models.dart';
 /// ApiService — camada de comunicação com a API Motora
 /// Centraliza todas as requisições HTTP do app
 class ApiService {
-  // IP do seu computador na rede Wi-Fi local para testes em aparelho físico (detectado: 10.0.30.197)
-  // Certifique-se de que o smartphone e o PC estejam conectados na mesma rede Wi-Fi.
-  static const String baseUrl = 'http://10.0.30.197:8000';
+  // Para celular fisico conectado via USB (com adb reverse tcp:8000 tcp:8000): use http://127.0.0.1:8000
+  // Para celular fisico via Wi-Fi domestico (sem isolamento): use o IP da sua maquina (ex: http://10.0.30.197:8000)
+  // Para emulador Android padrao do Android Studio: use http://10.0.2.2:8000
+  static const String baseUrl = 'http://127.0.0.1:8000';
 
   // Timeout padrão para requisições
   static const Duration _timeout = Duration(seconds: 10);

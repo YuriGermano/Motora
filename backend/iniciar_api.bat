@@ -28,6 +28,13 @@ echo.
 echo [2/3] Populando banco de dados SQLite...
 python seed_data.py
 
+REM Se houver celular Android conectado via USB, redireciona a porta 8000 automaticamente
+if exist "%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe" (
+    "%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000 >nul 2>&1
+) else (
+    adb reverse tcp:8000 tcp:8000 >nul 2>&1
+)
+
 echo.
 echo [3/3] Iniciando servidor FastAPI em http://localhost:8000
 echo Swagger: http://localhost:8000/docs
