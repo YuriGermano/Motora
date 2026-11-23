@@ -28,8 +28,10 @@ def buscar_servico(servico_id: int, db: Session = Depends(get_db)):
     return servico
 
 
-@router.post("/", response_model=schemas.ServicoResponse,
+@router.post("", response_model=schemas.ServicoResponse,
              status_code=status.HTTP_201_CREATED, summary="Registrar serviço/manutenção")
+@router.post("/", response_model=schemas.ServicoResponse,
+             status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def registrar_servico(dados: schemas.ServicoCreate, db: Session = Depends(get_db)):
     """
     Registra um serviço ou manutenção realizada no veículo.

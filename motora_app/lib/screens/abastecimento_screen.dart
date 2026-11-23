@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -15,6 +14,7 @@ class AbastecimentoScreen extends StatefulWidget {
 
 class _AbastecimentoScreenState extends State<AbastecimentoScreen> {
   List<Abastecimento> _abastecimentos = [];
+  CalculoConsumo _calculo = CalculoConsumo(mediasPorId: {}, mediaGeral: null, totalCiclos: 0);
   bool _loading = true;
   String? _error;
 
@@ -28,7 +28,12 @@ class _AbastecimentoScreenState extends State<AbastecimentoScreen> {
     setState(() { _loading = true; _error = null; });
     try {
       final lista = await ApiService.getAbastecimentos(widget.veiculoId);
-      setState(() { _abastecimentos = lista; _loading = false; });
+      final calc = CalculoConsumo.calcular(lista);
+      setState(() {
+        _abastecimentos = lista;
+        _calculo = calc;
+        _loading = false;
+      });
     } catch (e) {
       setState(() { _error = 'Erro ao carregar abastecimentos'; _loading = false; });
     }
@@ -69,10 +74,15 @@ class _AbastecimentoScreenState extends State<AbastecimentoScreen> {
                   : RefreshIndicator(
                       onRefresh: _carregar,
                       child: ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 80),
-                        itemCount: _abastecimentos.length,
+                        padding: const EdgeInsets.only(bottom: 80, top: 8, left: 12, right: 12),
+                        itemCount: _abastecimentos.length + (_calculo.mediaGeral != null ? 1 : 0),
                         itemBuilder: (context, i) {
-                          final a = _abastecimentos[i];
+                          if (_calculo.mediaGeral != null && i == 0) {
+                            return _buildHeaderConsumo();
+                          }
+                          final a = _abastecimentos[_calculo.mediaGeral != null ? i - 1 : i];
+                          final mediaItem = _calculo.mediasPorId[a.id];
+
                           return Dismissible(
                             key: Key('abast-${a.id}'),
                             direction: DismissDirection.endToStart,
@@ -109,12 +119,37 @@ class _AbastecimentoScreenState extends State<AbastecimentoScreen> {
                                   '${a.kmNoMomento.toStringAsFixed(0)} km  •  R\$ ${a.precoPorLitro.toStringAsFixed(3)}/L'
                                   '${a.posto != null ? "  •  ${a.posto}" : ""}'
                                   '${a.combustivel != null ? "\n${a.combustivel}" : ""}'
-                                  '${a.tanqueCheio == 1 ? "  •  Tanque cheio" : ""}',
+                                  '${a.tanqueCheio == 1 ? (mediaItem != null ? "  •  Tanque cheio" : "  •  Tanque cheio (início)") : "  •  Tanque parcial"}',
                                 ),
                                 isThreeLine: a.combustivel != null,
-                                trailing: Text(
-                                  a.data != null ? _formatDate(a.data!) : '',
-                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                trailing: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      a.data != null ? _formatDate(a.data!) : '',
+                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                    ),
+                                    if (mediaItem != null) ...[
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: Colors.green.shade600, width: 0.8),
+                                        ),
+                                        child: Text(
+                                          '${mediaItem.toStringAsFixed(2)} km/l',
+                                          style: TextStyle(
+                                            color: Colors.green.shade800,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ),
@@ -132,6 +167,61 @@ class _AbastecimentoScreenState extends State<AbastecimentoScreen> {
           if (resultado == true) _carregar();
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildHeaderConsumo() {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.accent.withOpacity(0.4), width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.speed, color: AppColors.accent, size: 28),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'MÉDIA DE CONSUMO',
+                    style: TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 0.8,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${_calculo.mediaGeral!.toStringAsFixed(2)} km/l',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  Text(
+                    'Calculado sobre ${_calculo.totalCiclos} ${_calculo.totalCiclos == 1 ? "ciclo" : "ciclos"} com tanque cheio (Δkm / Litros)',
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -16,8 +16,10 @@ def listar_alertas(veiculo_id: int, db: Session = Depends(get_db)):
     return db.query(models.Alerta).filter(models.Alerta.veiculo_id == veiculo_id).all()
 
 
-@router.post("/", response_model=schemas.AlertaResponse,
+@router.post("", response_model=schemas.AlertaResponse,
              status_code=status.HTTP_201_CREATED, summary="Criar alerta de manutenção")
+@router.post("/", response_model=schemas.AlertaResponse,
+             status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def criar_alerta(dados: schemas.AlertaCreate, db: Session = Depends(get_db)):
     """Cria um lembrete de manutenção por km ou por data."""
     veiculo = db.query(models.Veiculo).filter(models.Veiculo.id == dados.veiculo_id).first()

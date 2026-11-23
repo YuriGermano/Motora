@@ -7,7 +7,8 @@ import models, schemas
 router = APIRouter(prefix="/veiculos", tags=["Veículos"])
 
 
-@router.get("/", response_model=List[schemas.VeiculoResponse], summary="Listar todos os veículos")
+@router.get("", response_model=List[schemas.VeiculoResponse], summary="Listar todos os veículos")
+@router.get("/", response_model=List[schemas.VeiculoResponse], include_in_schema=False)
 def listar_veiculos(db: Session = Depends(get_db)):
     """Retorna lista de todos os veículos cadastrados."""
     return db.query(models.Veiculo).all()
@@ -22,8 +23,10 @@ def buscar_veiculo(veiculo_id: int, db: Session = Depends(get_db)):
     return veiculo
 
 
-@router.post("/", response_model=schemas.VeiculoResponse, status_code=status.HTTP_201_CREATED,
+@router.post("", response_model=schemas.VeiculoResponse, status_code=status.HTTP_201_CREATED,
              summary="Cadastrar novo veículo")
+@router.post("/", response_model=schemas.VeiculoResponse, status_code=status.HTTP_201_CREATED,
+             include_in_schema=False)
 def criar_veiculo(veiculo: schemas.VeiculoCreate, db: Session = Depends(get_db)):
     """Cadastra um novo veículo. A placa deve ser única."""
     # Verifica placa duplicada

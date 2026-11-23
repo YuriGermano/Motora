@@ -1,8 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+
+/// Formatador de placa que suporta padrão Mercosul (ABC1D23) e Tradicional (ABC-1234)
+/// utilizando o pacote mask_text_input_formatter
+class PlacaInputFormatter extends TextInputFormatter {
+  final MaskTextInputFormatter _maskMercosul = MaskTextInputFormatter(
+    mask: 'AAA#A##',
+    filter: {'A': RegExp(r'[a-zA-Z]'), '#': RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
+  final MaskTextInputFormatter _maskTradicional = MaskTextInputFormatter(
+    mask: 'AAA-####',
+    filter: {'A': RegExp(r'[a-zA-Z]'), '#': RegExp(r'[0-9]')},
+    type: MaskAutoCompletionType.lazy,
+  );
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final clean = newValue.text.replaceAll('-', '').toUpperCase();
+    final upperValue = newValue.copyWith(text: newValue.text.toUpperCase());
+
+    // Se o 5º caractere for uma letra, aplica máscara Mercosul (ex: ABC1D23)
+    if (clean.length >= 5 && RegExp(r'[A-Z]').hasMatch(clean[4])) {
+      return _maskMercosul.formatEditUpdate(oldValue, upperValue);
+    }
+    // Caso contrário, aplica máscara tradicional (ex: ABC-1234)
+    return _maskTradicional.formatEditUpdate(oldValue, upperValue);
+  }
+}
 
 /// Tela de cadastro de novo veículo
 class CadastrarVeiculoScreen extends StatefulWidget {
@@ -23,6 +56,7 @@ class _CadastrarVeiculoScreenState extends State<CadastrarVeiculoScreen> {
   final _placaCtrl = TextEditingController();
   final _corCtrl = TextEditingController();
   final _kmCtrl = TextEditingController();
+  final _placaFormatter = PlacaInputFormatter();
 
   String _combustivel = 'Gasolina';
   bool _salvando = false;
@@ -166,9 +200,23 @@ class _CadastrarVeiculoScreenState extends State<CadastrarVeiculoScreen> {
                 Expanded(
                   child: TextFormField(
                     controller: _placaCtrl,
-                    decoration: const InputDecoration(labelText: 'Placa *', hintText: 'ABC-1234'),
+                    decoration: const InputDecoration(
+                      labelText: 'Placa *',
+                      hintText: 'ABC1D23 ou ABC-1234',
+                      helperText: 'Mercosul ou tradicional',
+                    ),
                     textCapitalization: TextCapitalization.characters,
-                    validator: (v) => (v == null || v.isEmpty) ? 'Obrigatório' : null,
+                    inputFormatters: [_placaFormatter],
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Informe a placa';
+                      final placaLimpa = v.trim().replaceAll('-', '').toUpperCase();
+                      final regexTradicional = RegExp(r'^[A-Z]{3}[0-9]{4}$');
+                      final regexMercosul = RegExp(r'^[A-Z]{3}[0-9][A-Z][0-9]{2}$');
+                      if (!regexTradicional.hasMatch(placaLimpa) && !regexMercosul.hasMatch(placaLimpa)) {
+                        return 'Placa inválida (use ABC1D23 ou ABC-1234)';
+                      }
+                      return null;
+                    },
                   ),
                 ),
               ]),

@@ -233,3 +233,59 @@ class DashboardVeiculo {
         alertasAtivos: json['alertas_ativos'] ?? 0,
       );
 }
+
+/// Cálculo de média de consumo (km/l) entre abastecimentos consecutivos de tanque cheio
+/// Fórmula: Consumo = Δkm / Litros
+class CalculoConsumo {
+  final Map<int, double> mediasPorId; // ID do abastecimento -> km/l
+  final double? mediaGeral; // Média ponderada geral (total Δkm / total litros)
+  final int totalCiclos;
+
+  CalculoConsumo({
+    required this.mediasPorId,
+    this.mediaGeral,
+    required this.totalCiclos,
+  });
+
+  factory CalculoConsumo.calcular(List<Abastecimento> lista) {
+    if (lista.isEmpty) {
+      return CalculoConsumo(mediasPorId: {}, mediaGeral: null, totalCiclos: 0);
+    }
+
+    // Ordena do menor km para o maior (ordem cronológica do odômetro)
+    final ordenados = List<Abastecimento>.from(lista)
+      ..sort((a, b) => a.kmNoMomento.compareTo(b.kmNoMomento));
+
+    final Map<int, double> medias = {};
+    Abastecimento? anteriorCheio;
+    double totalDeltaKm = 0;
+    double totalLitros = 0;
+    int ciclos = 0;
+
+    for (final abast in ordenados) {
+      if (abast.tanqueCheio == 1) {
+        if (anteriorCheio != null) {
+          final deltaKm = abast.kmNoMomento - anteriorCheio.kmNoMomento;
+          if (deltaKm > 0 && abast.litros > 0) {
+            final media = deltaKm / abast.litros;
+            if (abast.id != null) {
+              medias[abast.id!] = media;
+            }
+            totalDeltaKm += deltaKm;
+            totalLitros += abast.litros;
+            ciclos++;
+          }
+        }
+        anteriorCheio = abast;
+      }
+    }
+
+    final double? mediaGeral = totalLitros > 0 ? (totalDeltaKm / totalLitros) : null;
+
+    return CalculoConsumo(
+      mediasPorId: medias,
+      mediaGeral: mediaGeral,
+      totalCiclos: ciclos,
+    );
+  }
+}

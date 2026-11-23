@@ -5,8 +5,9 @@ import '../models/models.dart';
 /// ApiService — camada de comunicação com a API Motora
 /// Centraliza todas as requisições HTTP do app
 class ApiService {
-  // IP do seu computador na rede Wi-Fi (detectado automaticamente: 192.168.0.105)
-  static const String baseUrl = 'http://192.168.0.105:8000';
+  // IP do seu computador na rede Wi-Fi local para testes em aparelho físico (detectado: 10.0.30.197)
+  // Certifique-se de que o smartphone e o PC estejam conectados na mesma rede Wi-Fi.
+  static const String baseUrl = 'http://10.0.30.197:8000';
 
   // Timeout padrão para requisições
   static const Duration _timeout = Duration(seconds: 10);

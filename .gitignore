@@ -1,0 +1,22 @@
+# Python / Backend
+backend/venv/
+backend/.venv/
+backend/env/
+backend/motora.db
+*.db
+*.sqlite
+*.sqlite3
+__pycache__/
+*.py[cod]
+
+# Flutter / Dart
+motora_app/.dart_tool/
+motora_app/build/
+motora_app/.flutter-plugins
+motora_app/.flutter-plugins-dependencies
+
+# VS Code / IDE
+.vscode/
+.idea/
+*.swp
+*.lock

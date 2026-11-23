@@ -1,0 +1,25 @@
+# Ambiente virtual Python
+venv/
+.venv/
+env/
+ENV/
+
+# Banco de dados SQLite
+motora.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Bytecode e cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+*.db
+*.sqlite
+*.sqlite3
+
+# Bytecode e cache Python
+__pycache__/
+*.py[cod]
+*$py.class

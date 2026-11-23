@@ -29,8 +29,10 @@ def buscar_abastecimento(abastecimento_id: int, db: Session = Depends(get_db)):
     return abastecimento
 
 
-@router.post("/", response_model=schemas.AbastecimentoResponse,
+@router.post("", response_model=schemas.AbastecimentoResponse,
              status_code=status.HTTP_201_CREATED, summary="Registrar abastecimento")
+@router.post("/", response_model=schemas.AbastecimentoResponse,
+             status_code=status.HTTP_201_CREATED, include_in_schema=False)
 def registrar_abastecimento(dados: schemas.AbastecimentoCreate, db: Session = Depends(get_db)):
     """
     Registra um novo abastecimento e atualiza automaticamente a quilometragem atual do veículo.
